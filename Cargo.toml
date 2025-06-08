@@ -1,0 +1,16 @@
+[package]
+name = "gym-snake-rs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "gym_snake_rs"
+crate-type = ["cdylib"]
+
+[[bin]]
+name = "gym-snake-rs-bin"  # Different name to avoid collision
+path = "src/main.rs"
+
+[dependencies]
+pyo3 = "0.24.0"
