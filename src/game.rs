@@ -26,28 +26,29 @@ pub struct Game {
     segments: Vec<Segment>,
     direction: Direction,
     apple: Segment,
+    size: i32,
     pub score: u32,
     pub game_over: bool,
 }
 
 impl Game {
     pub fn new(gl: GlGraphics) -> Game {
-        // let mut segments = Vec::new();
-        // segments.push(Segment { x: 320, y: 240 });
+        let size = 30;
 
         let segments = vec![
-            Segment { x: 50, y: 30 },
-            Segment { x: 40, y: 30 },
-            Segment { x: 30, y: 30 },
+            Segment { x: 5 * size, y: 3 * size },
+            Segment { x: 4 * size, y: 3 * size },
+            Segment { x: 3 * size, y: 3 * size },
         ];
 
-        let apple = Segment { x: 100, y: 100 };
+        let apple = Segment { x: 10 * size, y: 10 * size };
 
         Game {
             gl,
             segments,
             direction: Direction::Right,
             apple,
+            size: size,
             score: 0,
             game_over: false,
         }
@@ -66,10 +67,10 @@ impl Game {
             let x = i.x as f64;
             let y = i.y as f64;
 
-            square_segments.push(rectangle::square(x, y, 10.0));
+            square_segments.push(rectangle::square(x, y, self.size as f64));
         }
 
-        let apple = rectangle::square(self.apple.x as f64, self.apple.y as f64, 10.0);
+        let apple = rectangle::square(self.apple.x as f64, self.apple.y as f64, self.size as f64);
 
         self.gl.draw(args.viewport(), |c, gl| {
             clear(WHITE, gl);
@@ -90,7 +91,7 @@ impl Game {
                 0,
                 Segment {
                     x: self.segments[0].x,
-                    y: self.segments[0].y - 10,
+                    y: self.segments[0].y - self.size,
                 },
             );
         }
@@ -99,7 +100,7 @@ impl Game {
                 0,
                 Segment {
                     x: self.segments[0].x,
-                    y: self.segments[0].y + 10,
+                    y: self.segments[0].y + self.size,
                 },
             );
         }
@@ -107,7 +108,7 @@ impl Game {
             self.segments.insert(
                 0,
                 Segment {
-                    x: self.segments[0].x - 10,
+                    x: self.segments[0].x - self.size,
                     y: self.segments[0].y,
                 },
             );
@@ -116,7 +117,7 @@ impl Game {
             self.segments.insert(
                 0,
                 Segment {
-                    x: self.segments[0].x + 10,
+                    x: self.segments[0].x + self.size,
                     y: self.segments[0].y,
                 },
             );
@@ -147,18 +148,21 @@ impl Game {
 
     fn gen_apple_coords(&mut self, windowx: &u32, windowy: &u32) {
         let mut rng = rand::rng();
-        let grid_width = *windowx / 10;
-        let grid_height = *windowy / 10;
+        let grid_width = *windowx / self.size as u32;
+        let grid_height = *windowy / self.size as u32;
 
         loop {
             let x = rng.random_range(0..grid_width) as i32;
             let y = rng.random_range(0..grid_height) as i32;
 
-            let candidate = Segment { x, y };
+            let candidate = Segment {
+                x: x * self.size,
+                y: y * self.size
+            };
 
             if !self.segments.contains(&candidate) && &candidate != &self.apple {
-                self.apple.x = candidate.x * 10;
-                self.apple.y = candidate.y * 10;
+                self.apple.x = candidate.x;
+                self.apple.y = candidate.y;
                 break;
             }
         }
