@@ -40,10 +40,14 @@ fn main() {
 
     while let Some(event) = events.next(&mut window) {
         if let Some(args) = event.render_args() {
+            // println!("Rendering...");
+
             game.render(&args);
         }
 
         if let Some(args) = event.update_args() {
+            println!("Updating...");
+
             game.update(&args, &windowx, &windowy);
         }
 
@@ -53,6 +57,8 @@ fn main() {
         }
 
         if let Some(args) = event.button_args() {
+            println!("new input: {:?}", &args);
+
             game.change_directions(&args);
         }
     }

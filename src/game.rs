@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{GlGraphics, OpenGL};
 use piston::event_loop::{EventSettings, Events};
@@ -10,6 +12,7 @@ use rand::prelude::*;
 
 use crate::game;
 
+#[derive(PartialEq, Clone, Copy, Debug)]
 enum Direction {
     Up,
     Down,
@@ -32,6 +35,9 @@ pub struct Game {
     gl: GlGraphics,
     segments: Vec<Segment>,
     direction: Direction,
+    next_direction: Option<Direction>,
+    input_buffer: VecDeque<Direction>,
+    max_buffer_size: usize,
     apple: Segment,
     size: i32,
     pub score: u32,
@@ -41,7 +47,7 @@ pub struct Game {
 
 impl Game {
     pub fn new(gl: GlGraphics) -> Game {
-        let size = 30;
+        let size = 20;
 
         let segments = vec![
             Segment { x: 5 * size, y: 3 * size },
@@ -60,6 +66,9 @@ impl Game {
             gl,
             segments,
             direction: Direction::Right,
+            next_direction: None,
+            input_buffer: VecDeque::new(),
+            max_buffer_size: 2,
             apple,
             size: size,
             score: 0,
@@ -100,6 +109,14 @@ impl Game {
         if self.game_over {
             return;
         }
+
+        // Process next input from buffer
+        if let Some(new_dir) = self.input_buffer.pop_front() {
+            if check_directions(&self.direction, new_dir) {
+                self.direction = new_dir;
+            }
+        }
+
         if matches!(self.direction, Direction::Up) {
             self.segments.insert(
                 0,
@@ -183,6 +200,58 @@ impl Game {
     }
 
     pub fn change_directions(&mut self, args: &ButtonArgs){
+        if args.state == ButtonState::Press {
+            let pressed_direction = match args.button {
+                Button::Keyboard(Key::Up) => Some(Direction::Up),
+                Button::Keyboard(Key::Down) => Some(Direction::Down),
+                Button::Keyboard(Key::Left) => Some(Direction::Left),
+                Button::Keyboard(Key::Right) => Some(Direction::Right),
+                _ => None,
+            };
+
+            // Todo: decide best method
+            // Method 1
+            if let Some(p_dir) = pressed_direction {
+                // Add to buffer if it's a valid direction change
+                if self.input_buffer.is_empty() {
+                    // Check against current direction
+                    if check_directions(&self.direction, p_dir) {
+                        self.input_buffer.push_back(p_dir);
+                    }
+                } else {
+                    // Check against the last buffered direction
+                    if let Some(&last_buffered) = self.input_buffer.back() {
+                        if check_directions(&last_buffered, p_dir) {
+                            self.input_buffer.push_back(p_dir);
+                        }
+                    }
+                }
+
+                // Prevent buffer overflow
+                if self.input_buffer.len() > self.max_buffer_size {
+                    self.input_buffer.pop_front();
+                }
+            }
+
+            // // Method 2
+            // if let Some(p_dir) = pressed_direction {
+            //     // Determine the direction to validate against:
+            //     // If queue is not empty, use the last queued direction.
+            //     // Otherwise, use the snake's current actual direction.
+            //     let validation_direction = self.input_buffer.back().copied().unwrap_or(self.direction);
+
+            //     if check_directions(&validation_direction, p_dir) {
+            //         // Limit queue size to prevent too many buffered moves (e.g., 2)
+            //         if self.input_buffer.len() < self.max_buffer_size {
+            //             self.input_buffer.push_back(p_dir);
+            //         }
+            //     }
+            // }
+
+        }
+    }
+
+    pub fn change_directions_old(&mut self, args: &ButtonArgs){
         if args.state == ButtonState::Press {
             if args.button == Button::Keyboard(Key::Up) && check_directions(&self.direction, Direction::Up) {
                 self.direction = Direction::Up;
