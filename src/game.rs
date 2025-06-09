@@ -134,21 +134,15 @@ impl Game {
     }
 
     fn check_if_collision(&self, windowx: &u32, windowy: &u32) -> bool {
-        if self.segments[0].x as u32 >= *windowx || self.segments[0].y as u32 >= *windowy {
+        let head = &self.segments[0];
+    
+        // Check boundary collision
+        if head.x < 0 || head.y < 0 || head.x as u32 >= *windowx || head.y as u32 >= *windowy {
             return true;
         }
-
-        let has_duplicate = if let Some((first, rest)) = self.segments.split_first() {
-            rest.contains(first)
-        } else {
-            false
-        };
-
-        if has_duplicate {
-            return true;
-        }
-
-        false
+        
+        // Check self-collision (head touching any body segment)
+        self.segments[1..].contains(&head)
     }
 
     fn gen_apple_coords(&mut self, windowx: &u32, windowy: &u32) {
