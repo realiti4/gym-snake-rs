@@ -8,6 +8,8 @@ use piston::input::{
 use piston::window::WindowSettings;
 use rand::prelude::*;
 
+use crate::game;
+
 enum Direction {
     Up,
     Down,
@@ -21,6 +23,11 @@ pub struct Segment {
     pub y: i32,
 }
 
+pub struct GameSettings {
+    pub progressive_speed: bool,
+    pub allow_teleport: bool,
+}
+
 pub struct Game {
     gl: GlGraphics,
     segments: Vec<Segment>,
@@ -28,6 +35,7 @@ pub struct Game {
     apple: Segment,
     pub score: u32,
     pub game_over: bool,
+    pub game_settings: GameSettings,
 }
 
 impl Game {
@@ -43,6 +51,11 @@ impl Game {
 
         let apple = Segment { x: 100, y: 100 };
 
+        let game_settings = GameSettings {
+            progressive_speed: false,
+            allow_teleport: false
+        };
+
         Game {
             gl,
             segments,
@@ -50,6 +63,7 @@ impl Game {
             apple,
             score: 0,
             game_over: false,
+            game_settings: game_settings,
         }
     }
 
@@ -187,4 +201,13 @@ fn check_directions(dir1: &Direction, dir2: Direction) -> bool{
         return false;
     }
     return true;
+}
+
+fn round_to_nearest_10(n: i32) -> i32{
+    let a = (n/10) * 10 as i32;
+    let b = a + 10;
+    if n - a > b - n {
+        return b;
+    }
+    return a;
 }
