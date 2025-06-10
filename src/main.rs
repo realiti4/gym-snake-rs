@@ -4,18 +4,20 @@ extern crate opengl_graphics;
 extern crate piston;
 extern crate rand;
 
+use crate::piston::EventLoop;
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{GlGraphics, OpenGL};
-use crate::piston::EventLoop;
 use piston::event_loop::{EventSettings, Events};
-use piston::input::{RenderArgs, RenderEvent, UpdateArgs, UpdateEvent, ButtonArgs, ButtonEvent, Button, ButtonState, Key};
+use piston::input::{
+    Button, ButtonArgs, ButtonEvent, ButtonState, Key, RenderArgs, RenderEvent, UpdateArgs,
+    UpdateEvent,
+};
 use piston::window::WindowSettings;
 use rand::Rng;
 
 pub mod game;
 
 use game::{Game, Segment};
-
 
 fn main() {
     println!("Hello, world!");
@@ -32,10 +34,10 @@ fn main() {
         .unwrap();
 
     let gl = GlGraphics::new(opengl);
-    
     let mut game = Game::new(gl);
 
-    let event_settings = EventSettings::new().ups(15);
+    // Use higher UPS for smooth timing, game will control its own speed internally
+    let event_settings = EventSettings::new().ups(60);
     let mut events = Events::new(event_settings);
 
     while let Some(event) = events.next(&mut window) {
@@ -44,9 +46,21 @@ fn main() {
 
             game.render(&args);
         }
-
         if let Some(args) = event.update_args() {
-            println!("Updating...");
+            // Get speed info before update
+            let (current_ups, progressive_enabled) = game.get_current_speed_info();
+
+            if progressive_enabled {
+                println!(
+                    "Updating... Score: {}, Speed: {:.1} UPS (Progressive)",
+                    game.score, current_ups
+                );
+            } else {
+                println!(
+                    "Updating... Score: {}, Speed: {:.1} UPS (Fixed)",
+                    game.score, current_ups
+                );
+            }
 
             game.update(&args, &windowx, &windowy);
         }
